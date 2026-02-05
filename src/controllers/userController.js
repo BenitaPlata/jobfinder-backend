@@ -209,7 +209,7 @@ module.exports = {
   deleteCV,
   getAllUsers,
   deleteUser,
-  uploadCVText,      // 🆕
-  getMyCVText,       // 🆕
-  deleteCVText,      // 🆕
+  uploadCVText,      
+  getMyCVText,       
+  deleteCVText,     
 };

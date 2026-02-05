@@ -98,7 +98,7 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-// Hashear password antes de guardar
+
 // Hashear password antes de guardar
 userSchema.pre('save', async function () {
   if (!this.isModified('password')) {

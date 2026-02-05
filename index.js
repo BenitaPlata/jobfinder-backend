@@ -55,8 +55,8 @@ app.use('*', (req, res) => {
 app.use(errorHandler);
 
 /* ========= CRON ========= */
-const { startJobUpdateCron } = require('./src/cron/updateJobs');
-startJobUpdateCron();
+//const { startJobUpdateCron } = require('./src/cron/updateJobs');
+//startJobUpdateCron();
 
 /* ========= SERVER ========= */
 app.listen(PORT, () => {

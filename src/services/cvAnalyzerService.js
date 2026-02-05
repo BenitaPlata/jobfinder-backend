@@ -13,7 +13,7 @@ function getOpenAI() {
 async function analyzeCVWithAI(cvText) {
   try {
 
-    const openai = getOpenAI(); // ✅ IMPORTANTE
+    const openai = getOpenAI(); 
 
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',

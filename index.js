@@ -44,7 +44,7 @@ app.use('/api/jobs', jobRoutes);
 app.use('/api/applications', applicationRoutes);
 app.use('/api/import', importRoutes);
 app.use('/api/cv', cvRoutes); 
-app.use('/api/cv', cvMatchRoutes);
+//app.use('/api/cv', cvMatchRoutes);
 
 /* ========= 404 ========= */
 app.use('*', (req, res) => {

@@ -1,7 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const { analyzeCV } = require('../controllers/cv.controller');
-const authMiddleware = require('../middlewares/auth'); // 👈 ESTE ES EL BUENO
+const authMiddleware = require('../middlewares/auth'); 
 
 const router = express.Router();
 
@@ -16,7 +16,7 @@ const upload = multer({
 // POST /api/cv/analyze
 router.post(
   '/analyze',
-  // authMiddleware,   // 🔥 desactivado en dev
+  // authMiddleware,   // desactivado en dev
   upload.single('cv'),
   analyzeCV
 );

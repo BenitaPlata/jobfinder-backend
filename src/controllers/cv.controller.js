@@ -24,14 +24,17 @@ const analyzeCV = async (req, res) => {
     const analysis = await analyzeCVWithAI(cvText);
 
     res.json({
-      score: analysis.score,
-      atsCompatibility: analysis.atsCompatibility,
-      strengths: analysis.strengths,
-      weaknesses: analysis.weaknesses,
-      detectedSkills: analysis.detectedSkills,
-      keywordsMissing: analysis.keywordsMissing,
-      recommendations: analysis.recommendations,
-      sectionFeedback: analysis.sectionFeedback,
+      success: true,
+      analysis: {
+        score: analysis.score,
+        atsCompatibility: analysis.atsCompatibility,
+        strengths: analysis.strengths,
+        weaknesses: analysis.weaknesses,
+        detectedSkills: analysis.detectedSkills,
+        keywordsMissing: analysis.keywordsMissing,
+        recommendations: analysis.recommendations,
+        sectionFeedback: analysis.sectionFeedback,
+      },
     });
   } catch (error) {
     console.error('❌ Error analizando CV:', error);

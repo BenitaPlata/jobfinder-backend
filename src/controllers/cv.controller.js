@@ -11,7 +11,6 @@ const analyzeCV = async (req, res) => {
       return res.status(400).json({ message: 'Solo se permiten archivos PDF' });
     }
 
-    // ✅ AHORA SÍ: pdf-parse funciona
     const pdfData = await pdfParse(req.file.buffer);
     const cvText = pdfData.text;
 
@@ -23,18 +22,38 @@ const analyzeCV = async (req, res) => {
 
     const analysis = await analyzeCVWithAI(cvText);
 
+    // 🔒 PROTECCIÓN CRÍTICA (ESTE ERA EL BUG)
+    if (!analysis || typeof analysis !== 'object') {
+      console.error('❌ La IA devolvió algo inválido:', analysis);
+      return res.status(500).json({
+        message: 'La IA no devolvió un análisis válido',
+      });
+    }
+
+    // 🔒 NORMALIZACIÓN SEGURA
+    const normalizedAnalysis = {
+      score: analysis.score ?? 0,
+      atsCompatibility: analysis.atsCompatibility ?? 'Desconocido',
+      strengths: Array.isArray(analysis.strengths) ? analysis.strengths : [],
+      weaknesses: Array.isArray(analysis.weaknesses) ? analysis.weaknesses : [],
+      detectedSkills: Array.isArray(analysis.detectedSkills)
+        ? analysis.detectedSkills
+        : [],
+      keywordsMissing: Array.isArray(analysis.keywordsMissing)
+        ? analysis.keywordsMissing
+        : [],
+      recommendations: Array.isArray(analysis.recommendations)
+        ? analysis.recommendations
+        : [],
+      sectionFeedback:
+        typeof analysis.sectionFeedback === 'object'
+          ? analysis.sectionFeedback
+          : {},
+    };
+
     res.json({
       success: true,
-      analysis: {
-        score: analysis.score,
-        atsCompatibility: analysis.atsCompatibility,
-        strengths: analysis.strengths,
-        weaknesses: analysis.weaknesses,
-        detectedSkills: analysis.detectedSkills,
-        keywordsMissing: analysis.keywordsMissing,
-        recommendations: analysis.recommendations,
-        sectionFeedback: analysis.sectionFeedback,
-      },
+      analysis: normalizedAnalysis,
     });
   } catch (error) {
     console.error('❌ Error analizando CV:', error);

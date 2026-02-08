@@ -1,4 +1,4 @@
-const pdfParse = require('pdf-parse');
+const pdfjsLib = require('pdfjs-dist/legacy/build/pdf.js');
 const { analyzeCVWithAI } = require('../services/cvAnalyzerService');
 
 const analyzeCV = async (req, res) => {
@@ -11,8 +11,20 @@ const analyzeCV = async (req, res) => {
       return res.status(400).json({ message: 'Solo se permiten archivos PDF' });
     }
 
-    const pdfData = await pdfParse(req.file.buffer);
-    const cvText = pdfData.text;
+    // Extraer texto con pdfjs-dist
+    const pdfData = new Uint8Array(req.file.buffer);
+    const loadingTask = pdfjsLib.getDocument({ data: pdfData });
+    const pdf = await loadingTask.promise;
+    
+    let cvText = '';
+    
+    // Extraer texto de cada página
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const textContent = await page.getTextContent();
+      const pageText = textContent.items.map(item => item.str).join(' ');
+      cvText += pageText + '\n';
+    }
 
     if (!cvText || cvText.trim().length < 100) {
       return res.status(400).json({
@@ -22,7 +34,7 @@ const analyzeCV = async (req, res) => {
 
     const analysis = await analyzeCVWithAI(cvText);
 
-    // 🔒 PROTECCIÓN CRÍTICA (ESTE ERA EL BUG)
+    // 🔒 PROTECCIÓN CRÍTICA
     if (!analysis || typeof analysis !== 'object') {
       console.error('❌ La IA devolvió algo inválido:', analysis);
       return res.status(500).json({

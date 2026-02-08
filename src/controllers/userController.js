@@ -1,5 +1,5 @@
 const userRepository = require('../repositories/userRepository');
-const pdfjsLib = require('pdfjs-dist/legacy/build/pdf.js');
+const pdfjsLib = require('pdfjs-dist');
 const User = require('../models/User');
 const { analyzeCVWithAI } = require('../services/cvAnalyzerService');
 

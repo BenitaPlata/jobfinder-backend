@@ -1,4 +1,4 @@
-const pdfjsLib = require('pdfjs-dist/legacy/build/pdf.js');
+const pdfjsLib = require('pdfjs-dist');
 const { analyzeCVWithAI } = require('../services/cvAnalyzerService');
 
 const analyzeCV = async (req, res) => {

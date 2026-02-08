@@ -1,4 +1,4 @@
-const pdfjsLib = require('pdfjs-dist');
+const pdfParse = require('pdf-parse');
 const { analyzeCVWithAI } = require('../services/cvAnalyzerService');
 
 const analyzeCV = async (req, res) => {
@@ -8,23 +8,14 @@ const analyzeCV = async (req, res) => {
     }
 
     if (req.file.mimetype !== 'application/pdf') {
-      return res.status(400).json({ message: 'Solo se permiten archivos PDF' });
+      return res.status(400).json({
+        message: 'Solo se permiten archivos PDF',
+      });
     }
 
-    // Extraer texto con pdfjs-dist
-    const pdfData = new Uint8Array(req.file.buffer);
-    const loadingTask = pdfjsLib.getDocument({ data: pdfData });
-    const pdf = await loadingTask.promise;
-    
-    let cvText = '';
-    
-    // Extraer texto de cada página
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      const textContent = await page.getTextContent();
-      const pageText = textContent.items.map(item => item.str).join(' ');
-      cvText += pageText + '\n';
-    }
+    // ✅ EXTRAER TEXTO CON pdf-parse (NODE SAFE)
+    const pdfData = await pdfParse(req.file.buffer);
+    const cvText = pdfData.text;
 
     if (!cvText || cvText.trim().length < 100) {
       return res.status(400).json({
@@ -34,7 +25,7 @@ const analyzeCV = async (req, res) => {
 
     const analysis = await analyzeCVWithAI(cvText);
 
-    // 🔒 PROTECCIÓN CRÍTICA
+    // 🔒 PROTECCIÓN BÁSICA
     if (!analysis || typeof analysis !== 'object') {
       console.error('❌ La IA devolvió algo inválido:', analysis);
       return res.status(500).json({
@@ -42,30 +33,9 @@ const analyzeCV = async (req, res) => {
       });
     }
 
-    // 🔒 NORMALIZACIÓN SEGURA
-    const normalizedAnalysis = {
-      score: analysis.score ?? 0,
-      atsCompatibility: analysis.atsCompatibility ?? 'Desconocido',
-      strengths: Array.isArray(analysis.strengths) ? analysis.strengths : [],
-      weaknesses: Array.isArray(analysis.weaknesses) ? analysis.weaknesses : [],
-      detectedSkills: Array.isArray(analysis.detectedSkills)
-        ? analysis.detectedSkills
-        : [],
-      keywordsMissing: Array.isArray(analysis.keywordsMissing)
-        ? analysis.keywordsMissing
-        : [],
-      recommendations: Array.isArray(analysis.recommendations)
-        ? analysis.recommendations
-        : [],
-      sectionFeedback:
-        typeof analysis.sectionFeedback === 'object'
-          ? analysis.sectionFeedback
-          : {},
-    };
-
     res.json({
       success: true,
-      analysis: normalizedAnalysis,
+      analysis,
     });
   } catch (error) {
     console.error('❌ Error analizando CV:', error);

@@ -1,5 +1,5 @@
 const userRepository = require('../repositories/userRepository');
-const pdfParse = require('pdf-parse');
+const pdfjsLib = require('pdfjs-dist/legacy/build/pdf.js');
 const User = require('../models/User');
 const { analyzeCVWithAI } = require('../services/cvAnalyzerService');
 
@@ -78,9 +78,20 @@ const uploadCVText = async (req, res, next) => {
       return res.status(400).json({ message: 'Solo se permiten archivos PDF' });
     }
 
-    // Extraer texto del PDF
-    const pdfData = await pdfParse(req.file.buffer);
-    const cvText = pdfData.text;
+    // Extraer texto con pdfjs-dist
+    const pdfData = new Uint8Array(req.file.buffer);
+    const loadingTask = pdfjsLib.getDocument({ data: pdfData });
+    const pdf = await loadingTask.promise;
+    
+    let cvText = '';
+    
+    // Extraer texto de cada página
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const textContent = await page.getTextContent();
+      const pageText = textContent.items.map(item => item.str).join(' ');
+      cvText += pageText + '\n';
+    }
 
     if (!cvText || cvText.trim().length < 100) {
       return res.status(400).json({

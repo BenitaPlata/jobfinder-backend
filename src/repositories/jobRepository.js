@@ -51,8 +51,20 @@ const getJobs = async (filters = {}) => {
   }
 
   // ✅ CAMBIO: Solo filtrar por ciudad si NO es remoto
-  if (city && workModality !== 'Remote') {
-    query['location.city'] = new RegExp(city, 'i');
+  // Filtro por ciudad
+  if (city) {
+    if (workModality === 'Remote') {
+      // Si busca solo remotos, no filtrar por ciudad
+    } else if (workModality === 'Hybrid' || workModality === 'On-site') {
+      // Modalidad específica no remota → filtrar por ciudad
+      query['location.city'] = new RegExp(city, 'i');
+    } else {
+      // Modalidad "Todos" → mostrar remotos + ciudad específica
+      query.$or = [
+        { 'location.isRemote': true },
+        { 'location.city': new RegExp(city, 'i') },
+      ];
+    }
   }
 
   // Filtro por tipo de contrato
@@ -91,7 +103,7 @@ const getJobs = async (filters = {}) => {
   // SI HAY FILTRO DE DISTANCIA, traer TODAS las ofertas para filtrarlas
   let jobs;
   let total;
-  
+
   if (userLat && userLng && maxDistance) {
     // Traer TODAS las ofertas sin paginación
     jobs = await Job.find(query)
@@ -112,10 +124,7 @@ const getJobs = async (filters = {}) => {
           return job;
         }
 
-        const distance = calculateDistance(
-          userCoordinates,
-          job.location.coordinates
-        );
+        const distance = calculateDistance(userCoordinates, job.location.coordinates);
 
         if (distance !== null && distance <= parseFloat(maxDistance)) {
           job._doc.distanceFromUser = distance;
@@ -133,11 +142,10 @@ const getJobs = async (filters = {}) => {
     // Aplicar paginación DESPUÉS del filtro de distancia
     const skip = (page - 1) * limit;
     jobs = jobs.slice(skip, skip + parseInt(limit));
-
   } else {
     // SIN filtro de distancia, paginación normal
     const skip = (page - 1) * limit;
-    
+
     jobs = await Job.find(query)
       .populate('createdBy', 'name email')
       .sort({ postedDate: -1 })

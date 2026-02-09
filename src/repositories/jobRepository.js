@@ -50,8 +50,8 @@ const getJobs = async (filters = {}) => {
     query.sector = sector;
   }
 
-  // Filtro por ciudad
-  if (city) {
+  // ✅ CAMBIO: Solo filtrar por ciudad si NO es remoto
+  if (city && workModality !== 'Remote') {
     query['location.city'] = new RegExp(city, 'i');
   }
 

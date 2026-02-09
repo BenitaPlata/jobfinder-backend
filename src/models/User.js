@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
+const bcryptjs = require('bcryptjs');
 const { SECTORS, USER_ROLES } = require('../utils/constants');
 
 const userSchema = new mongoose.Schema(
@@ -105,13 +105,13 @@ userSchema.pre('save', async function () {
     return;
   }
 
-  const salt = await bcrypt.genSalt(10); 
-  this.password = await bcrypt.hash(this.password, salt);
+  const salt = await bcryptjs.genSalt(10); 
+  this.password = await bcryptjs.hash(this.password, salt);
 });
 
 // Método para comparar passwords
 userSchema.methods.comparePassword = async function (candidatePassword) {
-  return await bcrypt.compare(candidatePassword, this.password);
+  return await bcryptjs.compare(candidatePassword, this.password);
 };
 
 const User = mongoose.model('User', userSchema);

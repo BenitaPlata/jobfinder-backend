@@ -1,4 +1,4 @@
-const pdfParse = require('pdf-parse');
+const { PDFParse } = require('pdf-parse');
 const { analyzeCVWithAI } = require('../services/cvAnalyzerService');
 
 const analyzeCV = async (req, res) => {
@@ -8,14 +8,15 @@ const analyzeCV = async (req, res) => {
     }
 
     if (req.file.mimetype !== 'application/pdf') {
-      return res.status(400).json({
-        message: 'Solo se permiten archivos PDF',
-      });
+      return res.status(400).json({ message: 'Solo se permiten archivos PDF' });
     }
 
-    // ✅ EXTRAER TEXTO CON pdf-parse (NODE SAFE)
-    const pdfData = await pdfParse(req.file.buffer);
-    const cvText = pdfData.text;
+    // Extraer texto con pdf-parse v2
+    const parser = new PDFParse({ data: req.file.buffer });
+    const result = await parser.getText();
+    const cvText = result.text;
+
+    console.log('📄 Texto extraído:', cvText.substring(0, 200));
 
     if (!cvText || cvText.trim().length < 100) {
       return res.status(400).json({
@@ -25,7 +26,6 @@ const analyzeCV = async (req, res) => {
 
     const analysis = await analyzeCVWithAI(cvText);
 
-    // 🔒 PROTECCIÓN BÁSICA
     if (!analysis || typeof analysis !== 'object') {
       console.error('❌ La IA devolvió algo inválido:', analysis);
       return res.status(500).json({
@@ -33,9 +33,29 @@ const analyzeCV = async (req, res) => {
       });
     }
 
+    const normalizedAnalysis = {
+      score: analysis.score ?? 0,
+      atsCompatibility: analysis.atsCompatibility ?? 'Desconocido',
+      strengths: Array.isArray(analysis.strengths) ? analysis.strengths : [],
+      weaknesses: Array.isArray(analysis.weaknesses) ? analysis.weaknesses : [],
+      detectedSkills: Array.isArray(analysis.detectedSkills)
+        ? analysis.detectedSkills
+        : [],
+      keywordsMissing: Array.isArray(analysis.keywordsMissing)
+        ? analysis.keywordsMissing
+        : [],
+      recommendations: Array.isArray(analysis.recommendations)
+        ? analysis.recommendations
+        : [],
+      sectionFeedback:
+        typeof analysis.sectionFeedback === 'object'
+          ? analysis.sectionFeedback
+          : {},
+    };
+
     res.json({
       success: true,
-      analysis,
+      analysis: normalizedAnalysis,
     });
   } catch (error) {
     console.error('❌ Error analizando CV:', error);

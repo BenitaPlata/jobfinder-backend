@@ -24,8 +24,7 @@ const updateProfile = async (req, res, next) => {
     const updateData = {};
     if (name) updateData.name = name;
     if (profile) updateData.profile = { ...req.user.profile, ...profile };
-    if (preferences)
-      updateData.preferences = { ...req.user.preferences, ...preferences };
+    if (preferences) updateData.preferences = { ...req.user.preferences, ...preferences };
 
     const user = await userRepository.updateUser(req.user._id, updateData);
 
@@ -78,9 +77,11 @@ const uploadCVText = async (req, res, next) => {
       return res.status(400).json({ message: 'Solo se permiten archivos PDF' });
     }
 
-    // Extraer texto del PDF
-    const pdfData = await pdfParse(req.file.buffer);
-    const cvText = pdfData.text;
+    // Extraer texto con pdf-parse v2
+    const { PDFParse } = require('pdf-parse');
+    const parser = new PDFParse({ data: req.file.buffer });
+    const result = await parser.getText();
+    const cvText = result.text;
 
     if (!cvText || cvText.trim().length < 100) {
       return res.status(400).json({
@@ -88,10 +89,8 @@ const uploadCVText = async (req, res, next) => {
       });
     }
 
-    // Analizar con IA para extraer skills
     const analysis = await analyzeCVWithAI(cvText);
 
-    // Guardar en usuario
     await User.findByIdAndUpdate(req.user._id, {
       cvText: cvText,
       cvSkills: analysis.detectedSkills || [],
@@ -109,16 +108,15 @@ const uploadCVText = async (req, res, next) => {
     next(error);
   }
 };
-
 // 🆕 OBTENER CV GUARDADO
 const getMyCVText = async (req, res, next) => {
   try {
     const user = await User.findById(req.user._id).select('cvText cvSkills cvUploadDate');
 
     if (!user.cvText) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        message: 'No tienes un CV guardado' 
+        message: 'No tienes un CV guardado',
       });
     }
 
@@ -209,7 +207,7 @@ module.exports = {
   deleteCV,
   getAllUsers,
   deleteUser,
-  uploadCVText,      
-  getMyCVText,       
-  deleteCVText,     
+  uploadCVText,
+  getMyCVText,
+  deleteCVText,
 };

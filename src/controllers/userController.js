@@ -184,13 +184,28 @@ const deleteUser = async (req, res, next) => {
   try {
     const { userId } = req.params;
 
-    const user = await userRepository.deleteUser(userId);
+    const user = await userRepository.getUserById(userId);
 
     if (!user) {
       return res.status(404).json({
         message: 'Usuario no encontrado',
       });
     }
+
+    // 🔒 PROTECCIÓN: no permitir borrar ADMIN
+    if (user.role === 'ADMIN') {
+      return res.status(403).json({
+        message: 'No se puede eliminar un usuario administrador',
+      });
+    }
+
+    if (req.user._id.toString() === userId) {
+      return res.status(403).json({
+        message: 'No puedes eliminar tu propio usuario',
+      });
+    }
+
+    await userRepository.deleteUser(userId);
 
     res.json({
       message: 'Usuario eliminado correctamente',

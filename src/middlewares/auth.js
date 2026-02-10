@@ -15,7 +15,7 @@ const auth = async (req, res, next) => {
     // Verificar token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Buscar usuario
+    // Buscar usuario en BBDD
     const user = await User.findById(decoded.userId);
 
     if (!user) {
@@ -24,10 +24,18 @@ const auth = async (req, res, next) => {
       });
     }
 
-    // Añadir usuario a la request
+    // 🔥 AÑADIR USUARIO A LA REQUEST
     req.user = user;
+
+    // 🔥 NORMALIZAR ROLE (CLAVE DEL PROBLEMA)
+    // Garantiza coherencia: ADMIN / USER en todo el sistema
+    if (req.user.role) {
+      req.user.role = req.user.role.toUpperCase();
+    }
+
     next();
   } catch (error) {
+    console.error('❌ Error en auth middleware:', error);
     res.status(401).json({
       message: 'Token no válido',
     });

@@ -21,14 +21,13 @@ const updateJob = async (jobId, updateData) => {
 };
 
 const deleteJob = async (jobId) => {
-  const job = await Job.findByIdAndDelete(jobId);
-  return job;
+  return await Job.findByIdAndDelete(jobId);
 };
 
 const getJobs = async (filters = {}) => {
   const {
     page = 1,
-    limit = 50,
+    limit,
     sector,
     city,
     contractType,
@@ -45,21 +44,12 @@ const getJobs = async (filters = {}) => {
 
   const query = { isActive: true };
 
-  // Filtro por sector
-  if (sector) {
-    query.sector = sector;
-  }
+  if (sector) query.sector = sector;
 
-  // ✅ CAMBIO: Solo filtrar por ciudad si NO es remoto
-  // Filtro por ciudad
   if (city) {
-    if (workModality === 'Remote') {
-      // Si busca solo remotos, no filtrar por ciudad
-    } else if (workModality === 'Hybrid' || workModality === 'On-site') {
-      // Modalidad específica no remota → filtrar por ciudad
+    if (workModality === 'Hybrid' || workModality === 'On-site') {
       query['location.city'] = new RegExp(city, 'i');
-    } else {
-      // Modalidad "Todos" → mostrar remotos + ciudad específica
+    } else if (!workModality) {
       query.$or = [
         { 'location.isRemote': true },
         { 'location.city': new RegExp(city, 'i') },
@@ -67,17 +57,12 @@ const getJobs = async (filters = {}) => {
     }
   }
 
-  // Filtro por tipo de contrato
-  if (contractType) {
-    query.contractType = contractType;
-  }
+  if (contractType) query.contractType = contractType;
 
-  // Filtro por salario mínimo
   if (minSalary) {
     query['salaryRange.min'] = { $gte: parseInt(minSalary) };
   }
 
-  // Filtros específicos de Tech
   if (workModality) {
     query['techDetails.workModality'] = workModality;
   }
@@ -95,17 +80,17 @@ const getJobs = async (filters = {}) => {
     query['techDetails.englishLevel'] = englishLevel;
   }
 
-  // Filtro "solo con salario visible"
   if (showSalary === 'true' || showSalary === true) {
-    query['salaryRange.min'] = { $exists: true, $ne: null, $gt: 0 };
+    query['salaryRange.min'] = { $exists: true, $gt: 0 };
   }
 
-  // SI HAY FILTRO DE DISTANCIA, traer TODAS las ofertas para filtrarlas
   let jobs;
   let total;
 
+  // ============================
+  // FILTRO POR DISTANCIA
+  // ============================
   if (userLat && userLng && maxDistance) {
-    // Traer TODAS las ofertas sin paginación
     jobs = await Job.find(query)
       .populate('createdBy', 'name email')
       .sort({ postedDate: -1 });
@@ -115,10 +100,8 @@ const getJobs = async (filters = {}) => {
       lng: parseFloat(userLng),
     };
 
-    // Filtrar por distancia
     jobs = jobs
       .map((job) => {
-        // Si el trabajo es remoto, incluirlo siempre
         if (job.location.isRemote) {
           job._doc.distanceFromUser = 0;
           return job;
@@ -133,52 +116,54 @@ const getJobs = async (filters = {}) => {
 
         return null;
       })
-      .filter((job) => job !== null)
+      .filter(Boolean)
       .sort((a, b) => a._doc.distanceFromUser - b._doc.distanceFromUser);
 
-    // AHORA sí, contar el total DESPUÉS del filtro
     total = jobs.length;
 
-    // Aplicar paginación DESPUÉS del filtro de distancia
-    const skip = (page - 1) * limit;
-    jobs = jobs.slice(skip, skip + parseInt(limit));
+    if (limit) {
+      const skip = (page - 1) * limit;
+      jobs = jobs.slice(skip, skip + Number(limit));
+    }
   } else {
-    // SIN filtro de distancia, paginación normal
-    const skip = (page - 1) * limit;
-
-    jobs = await Job.find(query)
+    // ============================
+    // SIN DISTANCIA
+    // ============================
+    let queryBuilder = Job.find(query)
       .populate('createdBy', 'name email')
-      .sort({ postedDate: -1 })
-      .skip(skip)
-      .limit(parseInt(limit));
+      .sort({ postedDate: -1 });
 
+    if (limit) {
+      const skip = (page - 1) * limit;
+      queryBuilder = queryBuilder.skip(skip).limit(Number(limit));
+    }
+
+    jobs = await queryBuilder;
     total = await Job.countDocuments(query);
   }
 
   return {
     jobs,
     total,
-    page: parseInt(page),
-    totalPages: Math.ceil(total / limit),
+    page: Number(page),
+    totalPages: limit ? Math.ceil(total / limit) : 1,
   };
 };
 
 const incrementViewCount = async (jobId) => {
-  const job = await Job.findByIdAndUpdate(
+  return await Job.findByIdAndUpdate(
     jobId,
     { $inc: { viewsCount: 1 } },
     { new: true }
   );
-  return job;
 };
 
 const incrementApplicationCount = async (jobId) => {
-  const job = await Job.findByIdAndUpdate(
+  return await Job.findByIdAndUpdate(
     jobId,
     { $inc: { applicationsCount: 1 } },
     { new: true }
   );
-  return job;
 };
 
 module.exports = {

@@ -67,8 +67,8 @@ const CONTRACT_TYPES = [
 // Roles de usuario
 // ==============================
 const USER_ROLES = {
-  USER: 'user',
-  ADMIN: 'admin',
+  USER: 'USER',
+  ADMIN: 'ADMIN',
 };
 
 // ==============================

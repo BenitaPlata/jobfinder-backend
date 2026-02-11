@@ -1,65 +1,73 @@
-const cron = require('node-cron');
-const adzunaService = require('../services/adzunaService');
-const Job = require('../models/Job');
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
 
-async function importJobsAutomatically() {
-  try {
-    console.log('🔄 [CRON] Iniciando actualización automática de ofertas...');
+/* ========= IMPORTS ========= */
+const connectDB = require('./src/config/db');
+const errorHandler = require('./src/middlewares/errorHandler');
+const { startJobUpdateCron } = require('./src/cron/updateJobs');
 
-    const searchQueries = [
-      { what: 'software developer', pages: 3 },
-      { what: 'frontend react', pages: 2 },
-      { what: 'backend nodejs', pages: 2 },
-    ];
+/* ========= ROUTES ========= */
+const authRoutes = require('./src/routes/authRoutes');
+const userRoutes = require('./src/routes/userRoutes');
+const jobRoutes = require('./src/routes/jobRoutes');
+const applicationRoutes = require('./src/routes/applicationRoutes');
+const importRoutes = require('./src/routes/importRoutes');
+const cvRoutes = require('./src/routes/cv.routes');
+const cvMatchRoutes = require('./src/routes/cvMatch.routes');
 
-    let totalImported = 0;
-    let totalDuplicates = 0;
+const app = express();
+const PORT = process.env.PORT || 3000;
 
-    for (const query of searchQueries) {
-      console.log(`🔍 [CRON] Buscando: "${query.what}"...`);
+/* ========= DEBUG ========= */
+console.log('🔥 Index cargado correctamente');
 
-      const jobs = await adzunaService.searchJobs({
-        what: query.what,
-        where: 'España',
-        pages: query.pages,
-        results_per_page: 50,
-      });
+/* ========= BODY PARSERS ========= */
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-      for (const jobData of jobs) {
-        const exists = await Job.findOne({
-          title: jobData.title,
-          company: jobData.company,
-        });
+/* ========= CORS (ROBUSTO PARA VERCEL) ========= */
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (origin === 'http://localhost:5173') return callback(null, true);
+      if (origin.includes('.vercel.app')) return callback(null, true);
+      return callback(new Error('Not allowed by CORS'));
+    },
+    credentials: true,
+  })
+);
 
-        if (!exists) {
-          await Job.create(jobData);
-          totalImported++;
-        } else {
-          totalDuplicates++;
-        }
-      }
-    }
+/* ========= DB ========= */
+connectDB();
 
-    console.log(`✅ [CRON] Actualización completada:`);
-    console.log(`   - Ofertas nuevas: ${totalImported}`);
-    console.log(`   - Duplicados omitidos: ${totalDuplicates}`);
-    console.log(`   - Total en BD: ${await Job.countDocuments()}`);
-  } catch (error) {
-    console.error('❌ [CRON] Error en actualización automática:', error);
-  }
-}
+/* ========= CRON JOBS ========= */
+startJobUpdateCron();
 
-function startJobUpdateCron() {
-  cron.schedule('0 3 * * *', () => {
-    console.log('⏰ [CRON] Ejecutando tarea programada...');
-    importJobsAutomatically();
-  });
+/* ========= HEALTHCHECK ========= */
+app.get('/', (req, res) => {
+  res.json({ message: '✅ API JobFinder funcionando' });
+});
 
-  console.log('✅ [CRON] Job scheduler iniciado');
-  console.log('⏰ [CRON] Próxima ejecución: Todos los días a las 3:00 AM');
-}
+/* ========= ROUTES ========= */
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/jobs', jobRoutes);
+app.use('/api/applications', applicationRoutes);
+app.use('/api/import', importRoutes);
+app.use('/api/cv', cvRoutes);
+app.use('/api/cv', cvMatchRoutes);
 
-module.exports = {
-  startJobUpdateCron,
-  importJobsAutomatically,
-};
+/* ========= 404 ========= */
+app.use('*', (req, res) => {
+  res.status(404).json({ message: 'Ruta no encontrada' });
+});
+
+/* ========= ERROR HANDLER ========= */
+app.use(errorHandler);
+
+/* ========= SERVER ========= */
+app.listen(PORT, () => {
+  console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
+});

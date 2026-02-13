@@ -45,6 +45,8 @@ const getJobs = async (filters = {}) => {
 
   const query = { isActive: true };
 
+  console.log('🔍 Filtros recibidos:', { experienceRequired, workModality, city });
+
   if (sector) query.sector = sector;
 
   if (city) {
@@ -89,6 +91,8 @@ const getJobs = async (filters = {}) => {
   if (showSalary === 'true' || showSalary === true) {
     query['salaryRange.min'] = { $exists: true, $gt: 0 };
   }
+
+  console.log('📋 Query MongoDB construida:', JSON.stringify(query, null, 2));
 
   let jobs;
   let total;
@@ -147,6 +151,8 @@ const getJobs = async (filters = {}) => {
     jobs = await queryBuilder;
     total = await Job.countDocuments(query);
   }
+
+  console.log('📊 Resultados encontrados:', total);
 
   return {
     jobs,

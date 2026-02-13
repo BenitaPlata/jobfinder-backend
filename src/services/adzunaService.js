@@ -188,11 +188,68 @@ function extractTechDetails(title, description) {
   else if (text.includes('producto') || text.includes('product')) companyType = 'Producto';
   else if (text.includes('gran empresa') || text.includes('multinacional')) companyType = 'Grande';
 
-  // Detectar experiencia
+  // ✅ DETECCIÓN MEJORADA DE EXPERIENCIA
   let experienceRequired = 'Mid-level';
-  if (text.includes('senior') || text.includes('lead')) experienceRequired = 'Senior';
-  else if (text.includes('junior')) experienceRequired = 'Junior';
-  else if (text.includes('intern') || text.includes('trainee') || text.includes('prácticas')) experienceRequired = 'Intern';
+  
+  // Prácticas / Internship
+  if (
+    text.includes('práctica') ||
+    text.includes('practicas') ||
+    text.includes('internship') ||
+    text.includes('intern') ||
+    text.includes('trainee') ||
+    text.includes('becario') ||
+    text.includes('beca')
+  ) {
+    experienceRequired = 'Intern';
+  }
+  // Junior
+  else if (
+    text.includes('junior') ||
+    text.includes(' jr ') ||
+    text.includes(' jr.') ||
+    text.includes('sin experiencia') ||
+    text.includes('recién graduado') ||
+    text.includes('entry level') ||
+    text.includes('0-2 años') ||
+    text.includes('0 a 2 años')
+  ) {
+    experienceRequired = 'Junior';
+  }
+  // Senior / Lead
+  else if (
+    text.includes('senior') ||
+    text.includes(' sr ') ||
+    text.includes(' sr.') ||
+    text.includes('lead') ||
+    text.includes('principal') ||
+    text.includes('expert') ||
+    text.includes('arquitecto') ||
+    text.includes('5+ años') ||
+    text.includes('+5 años') ||
+    text.includes('más de 5 años')
+  ) {
+    experienceRequired = 'Senior';
+  }
+  // Lead específico
+  else if (
+    text.includes('tech lead') ||
+    text.includes('team lead') ||
+    text.includes('engineering manager') ||
+    text.includes('jefe de equipo') ||
+    text.includes('líder técnico')
+  ) {
+    experienceRequired = 'Lead';
+  }
+  // Mid-level (por defecto, pero también si menciona 2-5 años)
+  else if (
+    text.includes('2-5 años') ||
+    text.includes('3-5 años') ||
+    text.includes('mid-level') ||
+    text.includes('mid level')
+  ) {
+    experienceRequired = 'Mid-level';
+  }
 
   return {
     technologies: technologies.length > 0 ? technologies : ['JavaScript'],

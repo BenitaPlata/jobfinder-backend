@@ -40,6 +40,7 @@ const getJobs = async (filters = {}) => {
     userLat,
     userLng,
     maxDistance,
+    experienceRequired
   } = filters;
 
   const query = { isActive: true };
@@ -78,6 +79,15 @@ const getJobs = async (filters = {}) => {
 
   if (englishLevel) {
     query['techDetails.englishLevel'] = englishLevel;
+  }
+
+  if (englishLevel) {
+    query['techDetails.englishLevel'] = englishLevel;
+  }
+
+  // NUEVO: filtro por nivel de experiencia
+  if (filters.experienceRequired) {
+    query['techDetails.experienceRequired'] = filters.experienceRequired;
   }
 
   if (showSalary === 'true' || showSalary === true) {

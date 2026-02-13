@@ -14,12 +14,12 @@ const getAllJobs = async (req, res, next) => {
       workModality: req.query.workModality,
       companyType: req.query.companyType,
       englishLevel: req.query.englishLevel,
+      experienceRequired: req.query.experienceRequired, // ← AGREGAR ESTA LÍNEA
       showSalary: req.query.showSalary,
       userLat: req.query.userLat,
       userLng: req.query.userLng,
       maxDistance: req.query.maxDistance,
     };
-
     const result = await jobRepository.getJobs(filters);
 
     res.json(result);

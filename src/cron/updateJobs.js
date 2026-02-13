@@ -81,3 +81,8 @@ module.exports = {
   startJobUpdateCron,
   importJobsAutomatically,
 };
+
+// Si se ejecuta directamente, importar ofertas
+if (require.main === module) {
+  importJobsAutomatically();
+}

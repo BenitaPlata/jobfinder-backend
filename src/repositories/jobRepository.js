@@ -40,7 +40,7 @@ const getJobs = async (filters = {}) => {
     userLat,
     userLng,
     maxDistance,
-    experienceRequired
+    experienceRequired,
   } = filters;
 
   const query = { isActive: true };
@@ -81,13 +81,9 @@ const getJobs = async (filters = {}) => {
     query['techDetails.englishLevel'] = englishLevel;
   }
 
-  if (englishLevel) {
-    query['techDetails.englishLevel'] = englishLevel;
-  }
-
-  // NUEVO: filtro por nivel de experiencia
-  if (filters.experienceRequired) {
-    query['techDetails.experienceRequired'] = filters.experienceRequired;
+  // Filtro por nivel de experiencia
+  if (experienceRequired) {
+    query['techDetails.experienceRequired'] = experienceRequired;
   }
 
   if (showSalary === 'true' || showSalary === true) {
@@ -161,11 +157,7 @@ const getJobs = async (filters = {}) => {
 };
 
 const incrementViewCount = async (jobId) => {
-  return await Job.findByIdAndUpdate(
-    jobId,
-    { $inc: { viewsCount: 1 } },
-    { new: true }
-  );
+  return await Job.findByIdAndUpdate(jobId, { $inc: { viewsCount: 1 } }, { new: true });
 };
 
 const incrementApplicationCount = async (jobId) => {

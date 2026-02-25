@@ -23,7 +23,6 @@ async function searchJobs(options = {}) {
       what,
       where,
       results_per_page,
-      'content-type': 'application/json',
     };
 
     if (category) {

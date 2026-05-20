@@ -19,25 +19,35 @@ const cvMatchRoutes = require('./src/routes/cvMatch.routes');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-/* ========= DEBUG ========= */
-console.log('🔥 Index cargado correctamente');
+/* ========= TRUST PROXY (Railway) ========= */
+app.set('trust proxy', 1);
+
+/* ========= CORS ========= */
+const ALLOWED_ORIGINS = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'https://jobfinder-app-ai.vercel.app',
+  process.env.FRONTEND_URL,
+].filter(Boolean);
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
+    callback(null, false);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  optionsSuccessStatus: 200,
+};
+
+app.options('*', cors(corsOptions));
+app.use(cors(corsOptions));
 
 /* ========= BODY PARSERS ========= */
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-/* ========= CORS (ROBUSTO PARA VERCEL) ========= */
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
-      if (origin === 'http://localhost:5173') return callback(null, true);
-      if (origin.includes('.vercel.app')) return callback(null, true);
-      return callback(new Error('Not allowed by CORS'));
-    },
-    credentials: true,
-  })
-);
 
 /* ========= DB ========= */
 connectDB();

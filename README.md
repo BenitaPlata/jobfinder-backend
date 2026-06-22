@@ -1,16 +1,18 @@
-🔧 JobFinder — Backend API
+# 🔧 JobFinder — Backend API
 
 JobFinder es una plataforma fullstack orientada a la búsqueda de empleo en el sector tech. Permite buscar ofertas con filtros avanzados, subir un CV en PDF y obtener un análisis de compatibilidad con cada oferta mediante IA generativa.
 
 Este repositorio contiene la API REST que da soporte a toda la lógica de negocio: autenticación, gestión de ofertas, candidaturas y análisis de CV con OpenAI.
 
-🚀 API en producción · 🌐 Ver frontend · 📦 Repo Frontend
+🚀 **API en producción** · 🌐 **Frontend** · 📦 **Repositorio Frontend**
 
+---
 
-📐 Arquitectura
+# 📐 Arquitectura
 
-Patrón Controllers → Repositories → Models con capa de servicios para integraciones externas.
+Patrón **Controllers → Repositories → Models** con capa de servicios para integraciones externas.
 
+```text
 src/
 ├── config/            # Conexión a MongoDB
 ├── controllers/       # Lógica de negocio
@@ -31,128 +33,222 @@ src/
 ├── middlewares/       # auth, checkRole, errorHandler
 ├── cron/              # Importación automática de ofertas
 └── utils/             # distanceCalculator, helpers
+```
 
+---
 
-🗄️ Modelos de Datos
+# 🗄️ Modelos de Datos
 
-User
+## User
 
-CampoTipoDescripciónnameStringNombre del usuarioemailStringEmail únicopasswordStringHash bcryptjsroleStringUSER o ADMINcvTextStringTexto extraído del CV
+| Campo    | Tipo   | Descripción           |
+| -------- | ------ | --------------------- |
+| name     | String | Nombre del usuario    |
+| email    | String | Email único           |
+| password | String | Hash bcryptjs         |
+| role     | String | USER o ADMIN          |
+| cvText   | String | Texto extraído del CV |
 
-Job
+## Job
 
-CampoTipoDescripcióntitleStringTítulo de la ofertacompanyNameStringEmpresadescriptionStringDescripción completalocationStringCiudadsalaryStringRango salarialmodalityStringRemote / Hybrid / On-sitesectorStringSector de la empresatechnologies[String]Stack técnicocoordinatesObjectlat, lng para geolocalizaciónviewsNumberContador de vistasapplicationsNumberContador de aplicaciones
+| Campo        | Tipo     | Descripción                   |
+| ------------ | -------- | ----------------------------- |
+| title        | String   | Título de la oferta           |
+| companyName  | String   | Empresa                       |
+| description  | String   | Descripción completa          |
+| location     | String   | Ciudad                        |
+| salary       | String   | Rango salarial                |
+| modality     | String   | Remote / Hybrid / On-site     |
+| sector       | String   | Sector de la empresa          |
+| technologies | String[] | Stack técnico                 |
+| coordinates  | Object   | lat, lng para geolocalización |
+| views        | Number   | Contador de vistas            |
+| applications | Number   | Contador de aplicaciones      |
 
-Application
+## Application
 
-CampoTipoDescripciónuserObjectIdReferencia a UserjobObjectIdReferencia a JobstatusStringsaved / applied
+| Campo  | Tipo     | Descripción       |
+| ------ | -------- | ----------------- |
+| user   | ObjectId | Referencia a User |
+| job    | ObjectId | Referencia a Job  |
+| status | String   | saved / applied   |
 
+---
 
-🛣️ Endpoints API
+# 🛣️ Endpoints API
 
-Auth
+## Auth
 
-MétodoRutaDescripciónPOST/api/auth/registerRegistro de usuarioPOST/api/auth/loginLogin (devuelve JWT)
+| Método | Ruta                 | Descripción          |
+| ------ | -------------------- | -------------------- |
+| POST   | `/api/auth/register` | Registro de usuario  |
+| POST   | `/api/auth/login`    | Login (devuelve JWT) |
 
-Users
+## Users
 
-MétodoRutaAuthDescripciónGET/api/users/profile✅Obtener perfil propioPUT/api/users/profile✅Actualizar perfilPOST/api/users/cv✅Subir CV (PDF)GET/api/usersADMINListar todos los usuariosDELETE/api/users/:idADMINEliminar usuario
+| Método | Ruta                 | Auth  | Descripción           |
+| ------ | -------------------- | ----- | --------------------- |
+| GET    | `/api/users/profile` | ✅     | Obtener perfil propio |
+| PUT    | `/api/users/profile` | ✅     | Actualizar perfil     |
+| POST   | `/api/users/cv`      | ✅     | Subir CV (PDF)        |
+| GET    | `/api/users`         | ADMIN | Listar usuarios       |
+| DELETE | `/api/users/:id`     | ADMIN | Eliminar usuario      |
 
-Jobs
+## Jobs
 
-MétodoRutaAuthDescripciónGET/api/jobs✅Listar ofertas (filtros + paginación)GET/api/jobs/:id✅Detalle de ofertaPOST/api/jobsADMINCrear ofertaPUT/api/jobs/:idADMINActualizar ofertaDELETE/api/jobs/:idADMINEliminar oferta
+| Método | Ruta            | Auth  | Descripción       |
+| ------ | --------------- | ----- | ----------------- |
+| GET    | `/api/jobs`     | ✅     | Listar ofertas    |
+| GET    | `/api/jobs/:id` | ✅     | Detalle de oferta |
+| POST   | `/api/jobs`     | ADMIN | Crear oferta      |
+| PUT    | `/api/jobs/:id` | ADMIN | Actualizar oferta |
+| DELETE | `/api/jobs/:id` | ADMIN | Eliminar oferta   |
 
-Query params para GET /api/jobs:
+### Query Params
 
+```text
+city           Filtrar por ciudad
+modality       Remote / Hybrid / On-site
+salaryMin      Salario mínimo
+technologies   Tecnologías separadas por coma
+lat, lng       Coordenadas
+radius         Radio en kilómetros
+page, limit    Paginación
+```
 
-city — filtrar por ciudad
-modality — Remote / Hybrid / On-site
-salaryMin — salario mínimo
-technologies — tecnologías separadas por coma
-lat, lng, radius — geolocalización (km)
-page, limit — paginación
+## Applications
 
+| Método | Ruta                    | Auth | Descripción              |
+| ------ | ----------------------- | ---- | ------------------------ |
+| GET    | `/api/applications`     | ✅    | Mis candidaturas         |
+| POST   | `/api/applications`     | ✅    | Guardar/aplicar a oferta |
+| DELETE | `/api/applications/:id` | ✅    | Eliminar candidatura     |
 
-Applications
+## CV Analysis (IA)
 
-MétodoRutaAuthDescripciónGET/api/applications✅Mis candidaturasPOST/api/applications✅Guardar/aplicar a ofertaDELETE/api/applications/:id✅Eliminar candidatura
+| Método | Ruta                   | Auth | Descripción            |
+| ------ | ---------------------- | ---- | ---------------------- |
+| POST   | `/api/cv/analyze`      | ✅    | Analizar CV subido     |
+| POST   | `/api/cv/match/:jobId` | ✅    | Comparar CV con oferta |
 
-CV Analysis (IA)
+## Import
 
-MétodoRutaAuthDescripciónPOST/api/cv/analyze✅Analizar CV subido (PDF)POST/api/cv/match/:jobId✅Comparar CV con oferta
+| Método | Ruta                 | Auth  | Descripción                   |
+| ------ | -------------------- | ----- | ----------------------------- |
+| POST   | `/api/import/adzuna` | ADMIN | Importar ofertas desde Adzuna |
 
-Import
+---
 
-MétodoRutaAuthDescripciónPOST/api/import/adzunaADMINImportar ofertas de Adzuna
+# 🔐 Seguridad
 
+* JWT con expiración configurable.
+* bcryptjs para hash de contraseñas.
+* Middleware `checkRole` para rutas ADMIN.
+* Validación de datos con `express-validator`.
+* CORS configurado para localhost y Vercel.
+* Protección contra eliminación de administradores.
+* Variables sensibles almacenadas en `.env`.
 
-🔐 Seguridad
+---
 
+# 🚀 Instalación
 
-JWT con expiración configurable en middleware auth
-bcryptjs para hash de contraseñas (salt rounds: 10)
-checkRole middleware para rutas admin
-express-validator para validación de datos de entrada
-CORS configurado para dominios específicos (localhost + Vercel)
-Protecciones admin: no se puede eliminar un usuario ADMIN ni a sí mismo
-Variables de entorno en .env (incluido en .gitignore)
+## Prerrequisitos
 
+* Node.js >= 20.x
+* npm >= 10.x
+* MongoDB Atlas
+* API Key de OpenAI
 
+## 1. Clonar e instalar
 
-🚀 Instalación
-
-Prerrequisitos
-
-
-Node.js >= 20.x
-npm >= 10.x
-Cuenta en MongoDB Atlas
-API Key de OpenAI
-
-
-1. Clonar e instalar
-
-bashgit clone https://github.com/BenitaPlata/jobfinder-backend.git
+```bash
+git clone https://github.com/BenitaPlata/jobfinder-backend.git
 cd jobfinder-backend
 npm install
+```
 
-2. Variables de entorno
+## 2. Variables de entorno
 
-Crear .env en la raíz:
+Crear un archivo `.env` en la raíz:
 
-envMONGODB_URI=mongodb+srv://TU_USUARIO:TU_PASSWORD@cluster.mongodb.net/jobfinder
+```env
+MONGODB_URI=mongodb+srv://TU_USUARIO:TU_PASSWORD@cluster.mongodb.net/jobfinder
 JWT_SECRET=tu_clave_secreta
 PORT=3000
 OPENAI_API_KEY=sk-proj-XXXXXXXXXXXXXXXXXXXXX
-ADZUNA_APP_ID=tu-app-id       # Opcional
-ADZUNA_API_KEY=tu-api-key     # Opcional
 
-3. Iniciar
+ADZUNA_APP_ID=tu-app-id
+ADZUNA_API_KEY=tu-api-key
+```
 
-bash# Desarrollo
+## 3. Iniciar aplicación
+
+```bash
+# Desarrollo
 npm run dev
 
 # Producción
 npm start
+```
 
-Servidor en http://localhost:3000 · Healthcheck: GET / → { message: "✅ API JobFinder funcionando" }
+Servidor disponible en:
 
+```text
+http://localhost:3000
+```
 
-🛠️ Stack
+Healthcheck:
 
-TecnologíaUsoNode.js 20+RuntimeExpress 4.21Framework HTTPMongoDB + MongooseBase de datosJWT + bcryptjsAutenticaciónOpenAI SDKAnálisis de CV con IApdf-parse v2Extracción de texto de PDFsMulterSubida de archivosnode-cronImportación automática diariaexpress-validatorValidación de datos
+```json
+{
+  "message": "✅ API JobFinder funcionando"
+}
+```
 
+---
 
-🔄 Cron Job
+# 🛠️ Stack Tecnológico
 
-La importación de ofertas desde Adzuna se ejecuta automáticamente a las 3:00 AM cada día. También puede lanzarse manualmente con POST /api/import/adzuna (requiere rol ADMIN).
+| Tecnología         | Uso                     |
+| ------------------ | ----------------------- |
+| Node.js 20+        | Runtime                 |
+| Express 4.21       | Framework HTTP          |
+| MongoDB + Mongoose | Base de datos           |
+| JWT + bcryptjs     | Autenticación           |
+| OpenAI SDK         | Análisis de CV con IA   |
+| pdf-parse          | Extracción de texto PDF |
+| Multer             | Subida de archivos      |
+| node-cron          | Tareas programadas      |
+| express-validator  | Validación              |
 
+---
 
-👩‍💻 Autora
+# 🔄 Cron Job
 
-Benita Plata · @BenitaPlata · Portfolio · LinkedIn
+La importación de ofertas desde Adzuna se ejecuta automáticamente cada día a las **03:00 AM**.
 
+También puede lanzarse manualmente mediante:
 
-📄 Licencia
+```http
+POST /api/import/adzuna
+```
+
+(Requiere rol ADMIN).
+
+---
+
+# 👩‍💻 Autora
+
+**Benita Plata**
+
+* GitHub: @BenitaPlata
+* Portfolio
+* LinkedIn
+
+---
+
+# 📄 Licencia
 
 MIT License
+

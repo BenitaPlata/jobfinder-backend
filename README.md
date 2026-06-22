@@ -1,12 +1,7 @@
 🔧 JobFinder — Backend API
-<div align="center">
-API REST para la plataforma de empleo tech JobFinder.
-Mostrar imagen
-Mostrar imagen
-Mostrar imagen
-Mostrar imagen
-🚀 API en producción · 🌐 Frontend · 📦 Repo Frontend
-</div>
+JobFinder es una plataforma fullstack orientada a la búsqueda de empleo en el sector tech. Permite buscar ofertas con filtros avanzados, subir un CV en PDF y obtener un análisis de compatibilidad con cada oferta mediante IA generativa.
+Este repositorio contiene la API REST que da soporte a toda la lógica de negocio: autenticación, gestión de ofertas, candidaturas y análisis de CV con OpenAI.
+🚀 API en producción · 🌐 Ver frontend · 📦 Repo Frontend
 
 📐 Arquitectura
 Patrón Controllers → Repositories → Models con capa de servicios para integraciones externas.
@@ -45,7 +40,7 @@ MétodoRutaDescripciónPOST/api/auth/registerRegistro de usuarioPOST/api/auth/lo
 Users
 MétodoRutaAuthDescripciónGET/api/users/profile✅Obtener perfil propioPUT/api/users/profile✅Actualizar perfilPOST/api/users/cv✅Subir CV (PDF)GET/api/usersADMINListar todos los usuariosDELETE/api/users/:idADMINEliminar usuario
 Jobs
-MétodoRutaAuthDescripciónGET/api/jobs✅Listar ofertas (con filtros y paginación)GET/api/jobs/:id✅Detalle de ofertaPOST/api/jobsADMINCrear ofertaPUT/api/jobs/:idADMINActualizar ofertaDELETE/api/jobs/:idADMINEliminar oferta
+MétodoRutaAuthDescripciónGET/api/jobs✅Listar ofertas (filtros + paginación)GET/api/jobs/:id✅Detalle de ofertaPOST/api/jobsADMINCrear ofertaPUT/api/jobs/:idADMINActualizar ofertaDELETE/api/jobs/:idADMINEliminar oferta
 Query params para GET /api/jobs:
 
 city — filtrar por ciudad
@@ -91,24 +86,24 @@ envMONGODB_URI=mongodb+srv://TU_USUARIO:TU_PASSWORD@cluster.mongodb.net/jobfinde
 JWT_SECRET=tu_clave_secreta
 PORT=3000
 OPENAI_API_KEY=sk-proj-XXXXXXXXXXXXXXXXXXXXX
-ADZUNA_APP_ID=tu-app-id          # Opcional
-ADZUNA_API_KEY=tu-api-key        # Opcional
+ADZUNA_APP_ID=tu-app-id       # Opcional
+ADZUNA_API_KEY=tu-api-key     # Opcional
 3. Iniciar
 bash# Desarrollo
 npm run dev
 
 # Producción
 npm start
-El servidor estará en http://localhost:3000. Healthcheck en GET / → { message: "✅ API JobFinder funcionando" }.
+Servidor en http://localhost:3000 · Healthcheck: GET / → { message: "✅ API JobFinder funcionando" }
 
 🛠️ Stack
 TecnologíaUsoNode.js 20+RuntimeExpress 4.21Framework HTTPMongoDB + MongooseBase de datosJWT + bcryptjsAutenticaciónOpenAI SDKAnálisis de CV con IApdf-parse v2Extracción de texto de PDFsMulterSubida de archivosnode-cronImportación automática diariaexpress-validatorValidación de datos
 
 🔄 Cron Job
-La importación de ofertas desde Adzuna se ejecuta automáticamente a las 3:00 AM cada día. También puede ejecutarse manualmente con POST /api/import/adzuna (requiere rol ADMIN).
+La importación de ofertas desde Adzuna se ejecuta automáticamente a las 3:00 AM cada día. También puede lanzarse manualmente con POST /api/import/adzuna (requiere rol ADMIN).
 
 👩‍💻 Autora
-Benita Plata — @BenitaPlata
+Benita Plata · @BenitaPlata · Portfolio · LinkedIn
 
 📄 Licencia
-MIT License — Proyecto Académico
+MIT License
